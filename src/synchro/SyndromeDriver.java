@@ -22,6 +22,26 @@ public class SyndromeDriver {
 		System.out.println("Connected to DB");
     }
 
+	String getAddRow(ResultSet rs, String succCode) throws SQLException {
+		String uid = rs.getString("uid") ;
+		
+		String addRow = "";
+		addRow += "|add|"+uid+"|1|"+succCode+"|"
+				+Long.toString(rs.getTimestamp("logtime").getTime()/1000)+"|";
+		// Add the attributes
+		addRow += "+01:"+rs.getString("nodename")+" "
+				+ "+02:"+rs.getString("folder")+" "
+				+ "+03:"+rs.getString("application")+" "
+				+ "+04:"+rs.getString("ipaddr")+" ";
+		String eventText_0 = rs.getString("eventtext").trim().
+				replace('+',  '_');
+		String eventText_1 = eventText_0.substring(0, eventText_0.indexOf('\"'));
+		
+		// TODO: Put more fancy processing
+		addRow += eventText_1;
+		return addRow;
+	} 
+	
     
 	void joinData() throws SQLException {
 		Statement dbStmt = dbConn.createStatement();
@@ -63,8 +83,7 @@ public class SyndromeDriver {
 			
 			int msgRow = 1;
 			while (msgResults.next()) {
-				System.out.println("Reading row " + Integer.toString(msgRow++) + " from messages");
-
+				System.out.println("Reading msg row " + Integer.toString(msgRow++));
 				String uid = msgResults.getString("uid") ;
 				String succCode = "1";
 				Statement succStmt = dbConn.createStatement();
@@ -76,21 +95,8 @@ public class SyndromeDriver {
 				}
 				patternResults.close();
 				succStmt.close();
+				String addRow = getAddRow(msgResults, succCode);
 				
-				String addRow = "";
-				addRow += "|add|"+uid+"|1|"+succCode+"|"
-						+Long.toString(msgResults.getTimestamp("logtime").getTime()/1000)+"|";
-				// Add the attributes
-				addRow += msgResults.getString("nodename")+" "
-						+ msgResults.getString("folder")+" "
-						+ msgResults.getString("application")+" "
-						+ msgResults.getString("ipaddr")+" ";
-				String eventText_0 = msgResults.getString("eventtext").trim().
-						replace('+',  '_');
-				String eventText_1 = eventText_0.substring(0, eventText_0.indexOf('\"'));
-				
-				// TODO: Put more fancy processing
-				addRow += eventText_1;
 				System.out.println("Add row: "+addRow);
 				addStream.println(addRow);
 			}
@@ -102,7 +108,6 @@ public class SyndromeDriver {
 		predResults.close();
 		dbStmt.close();
 	}
-	
 	
 	void joinDataTime() throws SQLException {
 		Statement dbStmt = dbConn.createStatement();
@@ -138,29 +143,12 @@ public class SyndromeDriver {
 			
 			int msgRow = 1;
 			while (msgResults.next()) {
-				System.out.println("Reading row " + Integer.toString(msgRow++) + " from messages");
+				System.out.println("Reading failure msg " + Integer.toString(msgRow++));
 
-				String uid = msgResults.getString("uid") ;
-				String succCode = "0";
-				
-				String addRow = "";
-				addRow += "|add|"+uid+"|1|"+succCode+"|"
-						+Long.toString(msgResults.getTimestamp("logtime").getTime()/1000)+"|";
-				// Add the attributes
-				addRow += msgResults.getString("nodename")+" "
-						+ msgResults.getString("folder")+" "
-						+ msgResults.getString("application")+" "
-						+ msgResults.getString("ipaddr")+" ";
-				String eventText_0 = msgResults.getString("eventtext").trim().
-						replace('+',  '_');
-				String eventText_1 = eventText_0.substring(0, eventText_0.indexOf('\"'));
-				
-				// TODO: Put more fancy processing
-				addRow += eventText_1;
+				String addRow = getAddRow(msgResults, "0");
 				System.out.println("Add row: "+addRow);
 				addStream.println(addRow);
 			}
-			System.out.println("Finished failure event");
 
 			msgResults = 
 				msgStmt.executeQuery("SELECT * from message where logtime <= " +
@@ -170,29 +158,14 @@ public class SyndromeDriver {
 			
 			msgRow = 1;
 			while (msgResults.next()) {
-				System.out.println("Reading success row " + Integer.toString(msgRow++) + " from messages");
+				System.out.println("Reading success msg " + Integer.toString(msgRow++));
 
-				String uid = msgResults.getString("uid") ;
-				String succCode = "1";
-				
-				String addRow = "";
-				addRow += "|add|"+uid+"|1|"+succCode+"|"
-						+Long.toString(msgResults.getTimestamp("logtime").getTime()/1000)+"|";
-				// Add the attributes
-				addRow += msgResults.getString("nodename")+" "
-						+ msgResults.getString("folder")+" "
-						+ msgResults.getString("application")+" "
-						+ msgResults.getString("ipaddr")+" ";
-				String eventText_0 = msgResults.getString("eventtext").trim().
-						replace('+',  '_');
-				String eventText_1 = eventText_0.substring(0, eventText_0.indexOf('\"'));
-				
-				// TODO: Put more fancy processing
-				addRow += eventText_1;
+				String addRow = getAddRow(msgResults, "1");
 				System.out.println("Add row: "+addRow);
 				addStream.println(addRow);
 			}
 			
+			System.out.println("Finished failure event");
 			msgResults.close();
 			msgStmt.close();
 			addStream.close();
