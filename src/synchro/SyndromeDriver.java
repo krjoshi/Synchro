@@ -217,7 +217,7 @@ public class SyndromeDriver {
 
 		try {
 			driver.connectDB();
-			if (args.length > 0 && "time".startsWith(args[0])) {
+			if (args.length > 0 && "time".startsWith(args[0].trim())) {
 				driver.joinDataTime();
 			} else {
 				driver.joinData();
