@@ -215,8 +215,6 @@ public class SyndromeDriver {
 		// TODO Auto-generated method stub
 		SyndromeDriver driver = new SyndromeDriver();
 
-		System.out.println(args[0]);
-		System.exit(0);
 		try {
 			driver.connectDB();
 			if (args.length > 0 && "time".startsWith(args[0].trim())) {
