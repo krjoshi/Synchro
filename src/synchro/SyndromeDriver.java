@@ -38,7 +38,7 @@ public class SyndromeDriver {
 				dbStmt.executeQuery("SELECT uuid,msgtype,timerec FROM prediction;");
 
 		int predRow = 1;
-		while (predResults.next() && predRow <= 10) {
+		while (predResults.next()) {
 			System.out.println("Reading row " + Integer.toString(predRow++) + " from prediction");
 
 			String uuid = predResults.getString("uuid");
