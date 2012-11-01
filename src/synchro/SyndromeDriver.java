@@ -36,9 +36,10 @@ public class SyndromeDriver {
 		String eventText_0 = rs.getString("eventtext").trim().
 				replace('+',  '_');
 		String eventText_1 = eventText_0.substring(0, eventText_0.indexOf('\"'));
+		String eventText_2 = "+05:"+eventText_1.replaceAll("\\s+", " +05:");
 		
 		// TODO: Put more fancy processing
-		addRow += eventText_1;
+		addRow += eventText_2;
 		return addRow;
 	} 
 	
