@@ -43,7 +43,83 @@ public class SyndromeDriver {
 		return addRow;
 	} 
 	
-    
+
+	void templateLearnerDriver() throws SQLException {
+		
+		System.out.println("Going to try and get data!");
+
+		Statement dbStmt = dbConn.createStatement();
+		Statement failStmt = dbConn.createStatement();
+		ResultSet failEvTypes = failStmt.executeQuery("SELECT DISTINCT msgtype FROM prediction");
+		
+		while (failEvTypes.next()) {
+			int evType = failEvTypes.getInt("msgtype");
+			PrintStream addStream = null;
+			try {
+				addStream = new PrintStream(new File(evType+".tmpl_addfile"));
+			} catch (FileNotFoundException ex) {
+				System.out.println("Couldn't write to file."+ex.toString());
+				System.exit(-1);
+			}
+
+			ResultSet predResults = 
+					dbStmt.executeQuery("SELECT uuid,timerec FROM prediction where " +
+							"msgtype="+Integer.toString(evType));
+
+			
+			int predRow = 1;
+			while (predResults.next()) {
+				System.out.println("Reading row " + Integer.toString(predRow++) + " from prediction");
+				String uuid = predResults.getString("uuid");					
+				Date predDate = predResults.getDate("timerec") ;
+				Time predTime = predResults.getTime("timerec") ;
+				String datetime = predDate.toString()+" "+predTime.toString();
+				System.out.println("Prediction time is: " + datetime);
+
+				Statement msgStmt = dbConn.createStatement();
+				ResultSet msgResults = 
+					msgStmt.executeQuery("SELECT * from message where logtime <= \'"
+							+ datetime + "\' and logtime >= TIMESTAMPADD(MINUTE, -5, \'" 
+							+ datetime + "\')");
+				
+				int msgRow = 1;
+				while (msgResults.next()) {
+					System.out.println("Reading msg row " + Integer.toString(msgRow++));
+					String uid = msgResults.getString("uid") ;
+					String succCode = "1";
+					Statement succStmt = dbConn.createStatement();
+					ResultSet patternResults = 
+							succStmt.executeQuery("select uuid,uid from pattern where uuid=\'"+uuid
+									+"\' and uid=\'"+uid+"\'");
+					if (patternResults.next()) {
+						succCode = "0";
+					}
+					patternResults.close();
+					succStmt.close();
+					String addRow = getAddRow(msgResults, succCode);
+					
+					System.out.println("Add row: "+addRow);
+					addStream.println(addRow);
+				}
+				System.out.println("Finished failure event");
+				msgResults.close();
+				msgStmt.close();
+			}
+			addStream.close();
+			predResults.close();
+			dbStmt.close();
+			
+			
+			
+		}
+		failEvTypes.close();
+		failStmt.close();
+		
+		ResultSet predResults = 
+				dbStmt.executeQuery("SELECT uuid,msgtype,timerec FROM prediction;");
+
+	}
+
 	void joinData() throws SQLException {
 		Statement dbStmt = dbConn.createStatement();
 		
